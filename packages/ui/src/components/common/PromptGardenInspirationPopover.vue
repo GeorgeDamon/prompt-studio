@@ -32,7 +32,7 @@
             <Plant2 />
           </NIcon>
         </template>
-        {{ label || t('common.promptGarden.inspirationTrigger') }}
+        {{ t('common.promptGarden.inspirationTrigger') }}
       </NButton>
     </template>
 
@@ -52,7 +52,7 @@
             <Plant2 />
           </NIcon>
           <NText strong>
-            {{ label || (hasPrompt ? t('common.promptGarden.inspirationTitle') : t('common.promptGarden.inspirationStartTitle')) }}
+            {{ hasPrompt ? t('common.promptGarden.inspirationTitle') : t('common.promptGarden.inspirationStartTitle') }}
           </NText>
         </div>
         <NButton
@@ -188,7 +188,6 @@ type PopoverInst = {
 const props = withDefaults(
   defineProps<{
     mode: string
-    label?: string
     hasPrompt?: boolean
     disabled?: boolean
     testId?: string

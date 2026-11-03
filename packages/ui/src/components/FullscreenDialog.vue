@@ -3,7 +3,7 @@
     v-model:show="localVisible"
     preset="card"
     :title="title"
-    :size="size"
+    size="huge"
     :segmented="{ content: true }"
     style="width: 90vw; height: 90vh; max-width: 90vw; max-height: 90vh;"
     :mask-closable="true"
@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue'
+import { computed } from 'vue'
 
 import { NFlex } from 'naive-ui'
 import NModal from './common/AdaptiveModal.vue'
@@ -30,10 +30,6 @@ const props = defineProps({
   title: {
     type: String,
     default: ''
-  },
-  size: {
-    type: String as PropType<'small' | 'medium' | 'large' | 'huge'>,
-    default: 'huge'
   }
 })
 

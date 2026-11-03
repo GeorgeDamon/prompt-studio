@@ -61,10 +61,11 @@ vi.mock('../../../src/composables/useToast', () => ({
 describe('ModelManager', () => {
   const originalApi = window.electronAPI
   afterEach(() => { window.electronAPI = originalApi })
-  const mountComponent = () =>
+  const mountComponent = (textOnly = false) =>
     mount(ModelManager, {
       props: {
-        show: true
+        show: true,
+        textOnly
       },
       global: {
         provide: {
@@ -183,4 +184,14 @@ describe('ModelManager', () => {
     expect(wrapper.find('.stub-image-manager').attributes('style')).not.toContain('display: none')
     expect(wrapper.find('.stub-text-manager').attributes('style')).toContain('display: none')
   })
+  it('does not mount image or function model surfaces in the text edition', () => {
+    const wrapper = mountComponent(true)
+    expect(wrapper.find('.stub-text-manager').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="model-manager-tabs"]').exists()).toBe(false)
+    expect(wrapper.find('.stub-image-manager').exists()).toBe(false)
+    expect(wrapper.find('.stub-function-manager').exists()).toBe(false)
+    expect(wrapper.find('.stub-image-edit-modal').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
 })

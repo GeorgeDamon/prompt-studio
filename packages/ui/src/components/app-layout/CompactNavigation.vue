@@ -69,7 +69,6 @@ const { t } = useI18n()
 const menu = ref(false)
 const modes = ref(false)
 const modeGroups = [
-  { id: 'arena', label: 'arena.title', items: [{ path: '/arena', label: 'arena.title' }] },
   { id: 'basic', label: 'nav.basicMode', items: [
     { path: '/basic/system', label: 'workspace.systemMode' },
     { path: '/basic/user', label: 'workspace.userMode' },
@@ -85,7 +84,6 @@ const modeGroups = [
   ] },
 ]
 const labels: Record<string, string> = {
-  '/arena': 'arena.title',
   '/basic/system': 'promptOptimizer.systemPrompt',
   '/basic/user': 'promptOptimizer.userPrompt',
   '/pro/multi': 'contextMode.optimizationMode.message',

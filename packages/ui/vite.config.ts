@@ -35,7 +35,7 @@ export default defineConfig({
           '@prompt-optimizer/core': 'PromptOptimizerCore',
           'uuid': 'uuid'
         },
-        assetFileNames: 'style.css'
+        assetFileNames: asset => asset.names.some(name => name.endsWith('.css')) ? 'style.css' : 'assets/[name]-[hash][extname]'
       }
     },
     cssCodeSplit: false,

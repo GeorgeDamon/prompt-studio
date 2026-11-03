@@ -1,4 +1,3 @@
-import arena from './arena'
 import workspace from './workspace'
 import core from './core'
 import favorites from './favorites'
@@ -11,7 +10,6 @@ import image from './image'
 import errors from './errors'
 
 const messages = {
-  ...arena,
   ...workspace,
   ...core,
   ...favorites,

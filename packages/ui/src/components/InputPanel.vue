@@ -114,6 +114,7 @@
         <NInput
             v-else
             class="input-panel-primary-editor"
+            :aria-label="label"
             :value="modelValue"
             @update:value="$emit('update:modelValue', $event)"
             type="textarea"
@@ -125,6 +126,8 @@
             show-count
             :data-testid="`${testIdPrefix}-input`"
         />
+
+        <slot name="input-tools" />
 
         <!-- 控制面板 -->
         <OptimizationControls :compact="compact" :model-label="modelLabel" :template-label="templateLabel">
@@ -150,7 +153,7 @@
                         type="primary"
                         size="medium"
                         :data-testid="`${testIdPrefix}-optimize-button`"
-                        :aria-label="compact ? buttonText : undefined"
+                        :aria-label="buttonText"
                         :aria-busy="compact ? loading : undefined"
                         @click="$emit('submit')"
                         :loading="loading"

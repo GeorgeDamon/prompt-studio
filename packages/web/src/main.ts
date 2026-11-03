@@ -25,13 +25,19 @@ const app = createApp(App)
 installI18nOnly(app)
 installPinia(app)
 
+// Text edition accepts only the two text workspaces and saved prompts.
+router.beforeEach(to => {
+  if (to.path === '/' || to.path === '/favorites' || /^\/basic\/(user|system)$/.test(to.path)) return true
+  return '/basic/user'
+})
+
 // 第1步：安装 router 插件
 app.use(router)
 
 // 同步文档标题和语言属性
 if (typeof document !== 'undefined') {
   const syncDocumentTitle = () => {
-    document.title = i18n.global.t('common.appName')
+    document.title = 'Prompt Studio · 提示词优化'
     const currentLocale = String(i18n.global.locale.value || '')
     const htmlLang = currentLocale.startsWith('zh') ? 'zh' : 'en'
     document.documentElement.setAttribute('lang', htmlLang)

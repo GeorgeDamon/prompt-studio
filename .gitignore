@@ -202,3 +202,6 @@ AGENTS.md
 .codex-run/
 .codex-tmp/
 .trellis/
+
+# Local distribution outputs
+/release/

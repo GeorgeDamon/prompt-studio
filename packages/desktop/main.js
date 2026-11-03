@@ -17,6 +17,13 @@ const streamRegistry = createStreamRegistry();
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+// Use an independent data directory so this fork does not overwrite upstream app data.
+const { app: studioApp } = require('electron');
+studioApp.setName('Prompt Studio');
+const studioDataPath = process.env.PROMPT_STUDIO_DATA_DIR || require('path').join(studioApp.getPath('appData'), 'Prompt Studio');
+require('fs').mkdirSync(studioDataPath, { recursive: true });
+studioApp.setPath('userData', studioDataPath);
+
 // 在所有其他模块之前初始化日志系统
 const ConsoleLogger = require('./config/console-logger');
 const consoleLogger = new ConsoleLogger();
@@ -443,7 +450,11 @@ function createWindow() {
 
   mainWindow = new BrowserWindow({
     width: 1200,
-    height: 800,
+    height: 820,
+    minWidth: 400,
+    minHeight: 600,
+    title: 'Prompt Studio',
+    backgroundColor: '#ffffff',
     icon: iconPath, // 设置窗口图标
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -1001,7 +1012,7 @@ function setupIPC() {
   }));
 
   // Streaming handler - more complex due to callbacks
-  ipcMain.handle('llm-sendMessageStream', withModelNetwork(async (event, messages, provider, streamId, selection) => {
+  ipcMain.handle('llm-sendMessageStream', withModelNetwork(async (event, messages, provider, streamId) => {
     const lease = streamRegistry.begin(event.sender, streamId);
     try {
       // 使用符合 StreamHandlers 接口的回调名称
@@ -1029,7 +1040,7 @@ function setupIPC() {
         }
       };
 
-      await llmService.sendMessageStream(messages, provider, callbacks, selection);
+      await llmService.sendMessageStream(messages, provider, callbacks);
       return createSuccessResponse(null);
     } catch (error) {
       return createErrorResponse(error);
@@ -2509,6 +2520,13 @@ const isVersionIgnored = async (version) => {
 
 // 自动更新处理器设置
 async function setupUpdateHandlers() {
+  // Locally distributed fork builds must never replace themselves with upstream releases.
+  if (!require('./package.json').build?.publish) {
+    for (const key of ['UPDATE_CHECK', 'UPDATE_CHECK_ALL_VERSIONS', 'UPDATE_OPEN_RELEASE_PAGE', 'UPDATE_START_DOWNLOAD', 'UPDATE_INSTALL', 'UPDATE_IGNORE_VERSION', 'UPDATE_UNIGNORE_VERSION', 'UPDATE_GET_IGNORED_VERSIONS', 'UPDATE_DOWNLOAD_SPECIFIC_VERSION']) {
+      ipcMain.handle(IPC_EVENTS[key], () => createErrorResponse(Object.assign(new Error('Automatic updates are not configured for this distribution.'), { code: 'UPDATER_NOT_CONFIGURED' })));
+    }
+    return;
+  }
   console.log('[Main Process] Setting up auto-update handlers...');
 
 

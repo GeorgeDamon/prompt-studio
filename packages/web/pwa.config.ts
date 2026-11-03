@@ -11,9 +11,9 @@ export function createPwaPlugin() {
     devOptions: { enabled: false },
     manifest: {
       id: './',
-      name: '提示词优化器',
-      short_name: '提示词优化器',
-      description: '优化提示词、比较模型结果，保存你的提示词工作区。',
+      name: 'Prompt Studio',
+      short_name: 'Prompt Studio',
+      description: '写出更清晰的提示词，保存你的创作。',
       lang: 'zh-CN',
       start_url: './',
       scope: './',

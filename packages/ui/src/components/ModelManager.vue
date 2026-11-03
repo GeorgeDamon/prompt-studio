@@ -41,7 +41,8 @@
       </template>
 
       <div class="model-manager-content" data-testid="model-manager-dialog">
-        <NTabs
+        <slot v-if="textOnly" name="active-model" />
+        <NTabs v-if="!textOnly"
           v-model:value="activeTab"
           data-testid="model-manager-tabs"
           type="segment"
@@ -69,14 +70,14 @@
                 ref="textManagerRef"
                 @models-updated="handleTextModelsUpdated"
               />
-              <ImageModelManager
+              <ImageModelManager v-if="!textOnly"
                 v-show="activeTab === 'image'"
                 ref="imageListRef"
                 @edit="handleEditImageModel"
                 @clone="handleCloneImageModel"
                 @add="handleAddImageModel"
               />
-              <FunctionModelManager
+              <FunctionModelManager v-if="!textOnly"
                 v-show="activeTab === 'function'"
                 ref="functionManagerRef"
               />
@@ -87,7 +88,7 @@
       <ModelNetworkStatus />
     </NModal>
 
-    <ImageModelEditModal
+    <ImageModelEditModal v-if="!textOnly"
       :show="showImageModelEdit"
       :config-id="editingImageModelId"
       :initial-config="draftImageModelConfig"
@@ -117,6 +118,7 @@ import type { AppServices } from '../types/services'
 import { useWorkspaceLayout } from '../composables/ui/useWorkspaceLayout'
 
 defineProps({
+  textOnly: { type: Boolean, default: false },
   show: {
     type: Boolean,
     default: false

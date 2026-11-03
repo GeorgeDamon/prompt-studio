@@ -111,7 +111,6 @@ const messages = {
     "copied": "Copied",
     "render": "Render",
     "htmlPreview": "HTML preview",
-    "previewFailed": "Preview failed",
     "outputStop": "Stop",
     "outputCancelled": "Generation stopped. Received content is retained.",
     "outputFailed": "Generation did not complete. Received content is retained.",

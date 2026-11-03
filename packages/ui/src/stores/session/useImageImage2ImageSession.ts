@@ -15,7 +15,6 @@ import { isValidVariableName, sanitizeVariableRecord } from '../../types/variabl
 import { coerceTestPanelVersionValue } from '../../utils/testPanelVersion'
 import {
   normalizeImageSourceToPayload,
-  normalizeGeneratedImagePayload,
   persistImagePayloadAsAssetId,
 } from '../../utils/image-asset-storage'
 import {
@@ -462,7 +461,14 @@ export const useImageImage2ImageSession = defineStore('imageImage2ImageSession',
         continue
       }
 
-      const payload = await normalizeGeneratedImagePayload(img)
+      const payload = img.b64
+        ? {
+            b64: img.b64,
+            mimeType: img.mimeType || 'image/png',
+          }
+        : img.url
+          ? await normalizeImageSourceToPayload(img.url)
+          : null
 
       if (!payload) {
         processedImages.push(img)

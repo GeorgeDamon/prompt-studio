@@ -12,8 +12,8 @@
         - 减少 web/extension 应用的重复代码
     -->
     <NConfigProvider
-        :theme="naiveTheme"
-        :theme-overrides="themeOverrides"
+        :theme="focusMode ? null : naiveTheme"
+        :theme-overrides="focusMode ? focusTheme : themeOverrides"
         :style="isCompact ? { '--compact-accent': themeOverrides.common?.primaryColor } : undefined"
         :hljs="hljsInstance"
     >
@@ -29,7 +29,18 @@
             <NText depth="2">{{ t("log.info.initializing") }}</NText>
         </div>
         <template v-else>
-            <MainLayoutUI>
+            <component :is="focusMode ? FocusLayout : MainLayoutUI" @action="handleMobileAction">
+                <template v-if="focusMode" #model-selector>
+                    <TextModelSelector
+                        v-model="selectedOptimizeModelKey"
+                        :options="textModelOptions"
+                        trigger-label="选择模型"
+                        aria-label="选择模型"
+                        selection-only
+                        :disabled="!!activeWorkspaceRef?.isUpdateBusy?.()"
+                        @focus="refreshTextModels"
+                    />
+                </template>
                 <template #mobile-nav>
                     <CompactNavigation
                         :workspace-path="activeWorkspaceContextPath"
@@ -84,10 +95,11 @@
                         />
                     </RouterView>
                 </template>
-            </MainLayoutUI>
+            </component>
 
             <!-- Modals and Drawers that are conditionally rendered -->
             <ModelManagerUI
+                :text-only="focusMode"
                 ref="modelManagerDialogRef"
                 v-if="isReady"
                 v-model:show="modelManager.showConfig"
@@ -97,7 +109,8 @@
                         if (!v) handleModelManagerClosed();
                     }
                 "
-            />
+            >
+            </ModelManagerUI>
             <TemplateManagerUI
                 v-if="isReady"
                 v-model:show="templateManagerState.showTemplates"
@@ -224,7 +237,6 @@
 </template>
 
 <script setup lang="ts">
-import { useArenaSession } from '../../stores/session/useArenaSession';
 /**
  * PromptOptimizerApp - 主应用组件
  *
@@ -273,6 +285,14 @@ hljs.registerLanguage("json", jsonLang);
 
 // 内部组件导入
 import MainLayoutUI from '../MainLayout.vue'
+import FocusLayout from './FocusLayout.vue'
+import { focusModeKey, focusCommandKey, focusBusyKey, type FocusCommand } from './focus-context'
+import { focusTheme } from '../../config/focus-theme'
+const props = withDefaults(defineProps<{ focusMode?: boolean }>(), { focusMode: false })
+const focusMode = computed(() => props.focusMode)
+const focusCommand = ref<FocusCommand | null>(null)
+provide(focusModeKey, focusMode)
+provide(focusCommandKey, focusCommand)
 import CompactNavigation from './CompactNavigation.vue'
 import { useWorkspaceViewState } from '../../composables/ui/useWorkspaceViewState'
 import { useWorkspaceLayout } from '../../composables/ui/useWorkspaceLayout'
@@ -284,6 +304,7 @@ const { isCompact, keyboardViewportHeight, keyboardViewportTop } = useWorkspaceL
 import '../../styles/compact-workspace.css'
 
 import ModelManagerUI from '../ModelManager.vue'
+import TextModelSelector from '../TextModelSelector.vue'
 import TemplateManagerUI from '../TemplateManager.vue'
 import HistoryDrawerUI from '../HistoryDrawer.vue'
 import DataManagerUI from '../DataManager.vue'
@@ -334,7 +355,7 @@ import {
 } from '../../composables'
 
 // i18n functions
-import { initializeI18nWithStorage, setI18nServices } from '../../plugins/i18n'
+import { initializeI18nWithStorage, setI18nServices, i18n as appI18n } from '../../plugins/i18n'
 
 // Pinia functions
 import { setPiniaServices, getPiniaServices } from '../../plugins/pinia'
@@ -355,6 +376,7 @@ import type { TemplateManagerTemplateType } from '../../composables/prompt/useTe
 
 // Data Transformation
 import { DataTransformer } from '../../utils/data-transformer'
+import { getTextModelSelectionConfigId } from '../../utils/text-model-selection'
 import { getProviderDisplayName, getTextModelConfigDisplayName } from '../../utils/provider-display'
 import {
   DATA_BACKUP_STATUS_EVENT,
@@ -502,7 +524,6 @@ const imageSubModeApi = useImageSubMode(services);
 const getWorkspacePathFromGlobalSettings = () => {
   const globalSettings = useGlobalSettings()
   const { functionMode, basicSubMode, proSubMode, imageSubMode } = globalSettings.state
-  if (functionMode === 'arena') return '/arena'
   if (functionMode === 'image') return normalizeWorkspacePath(`/image/${imageSubMode}`)
   if (functionMode === 'pro') return normalizeWorkspacePath(`/pro/${proSubMode}`)
   return normalizeWorkspacePath(`/basic/${basicSubMode}`)
@@ -652,6 +673,7 @@ watch(
               }
               await _routeInitInFlight
                 await initializeI18nWithStorage();
+                if (focusMode.value) appI18n.global.locale.value = 'zh-CN';
             }
         },
     // 🔧 必须 immediate：部分运行环境下 services 可能在 watch 注册前就已就绪，
@@ -739,6 +761,7 @@ const basicModeWorkspaceRef = ref<{
 // 🔧 Step E: 使用 route-computed 代替旧 state
 type WorkspaceRouteName = string | symbol | null | undefined;
 const activeWorkspaceRef = shallowRef<{ isUpdateBusy?: () => boolean } | null>(null);
+provide(focusBusyKey, computed(() => !!activeWorkspaceRef.value?.isUpdateBusy?.()));
 const setWorkspaceRef = (instance: unknown, routeName: WorkspaceRouteName) => {
     const resolvedInstance = instance ?? null;
     activeWorkspaceRef.value = resolvedInstance as typeof activeWorkspaceRef.value;
@@ -778,7 +801,7 @@ const isCompareMode = ref(true);
 
 // Naive UI 主题配置
 const { naiveTheme, themeOverrides, initTheme } = useNaiveTheme();
-watch(() => naiveTheme.value?.name, (theme) => {
+watch(() => focusMode.value ? undefined : naiveTheme.value?.name, (theme) => {
     if (typeof document !== 'undefined') document.documentElement.dataset.workspaceTheme = theme === 'dark' ? 'dark' : 'light';
 }, { immediate: true });
 
@@ -1149,7 +1172,6 @@ provide("optimizationContextTools", optimizationContextTools);
 
 // 🔧 Step E: 使用 route-computed 代替旧 state
 const getCurrentSession = () => {
-    if (routeFunctionMode.value === 'arena') return null;
     if (routeFunctionMode.value === 'basic') {
         return routeBasicSubMode.value === 'system' ? basicSystemSession : basicUserSession;
     } else if (routeFunctionMode.value === 'pro') {
@@ -1970,10 +1992,10 @@ const refreshTextModels = async () => {
         const selectionReady = modelManager.isModelSelectionReady;
 
         if (fallbackValue && selectionReady && hasRestoredInitialState.value) {
-            if (selectedOptimizeModelKey.value && !availableKeys.has(selectedOptimizeModelKey.value)) {
+            if (selectedOptimizeModelKey.value && !availableKeys.has(getTextModelSelectionConfigId(selectedOptimizeModelKey.value))) {
                 selectedOptimizeModelKey.value = fallbackValue;
             }
-            if (selectedTestModelKey.value && !availableKeys.has(selectedTestModelKey.value)) {
+            if (selectedTestModelKey.value && !availableKeys.has(getTextModelSelectionConfigId(selectedTestModelKey.value))) {
                 selectedTestModelKey.value = fallbackValue;
             }
             if (!selectedOptimizeModelKey.value) {
@@ -2322,7 +2344,7 @@ async function navigateToSubModeKey(
     BasicSubMode | ProSubMode | ImageSubMode
   ]
 
-  const path = toKey === 'arena' ? '/arena' : `/${mode}/${subMode}`
+  const path = `/${mode}/${subMode}`
   const fromPath = routerInstance.currentRoute.value.fullPath
 
   if (opts?.replace) {
@@ -2360,8 +2382,7 @@ const compactAutosave = useCompactSessionAutosave({
 });
 
 // Optional Web/PWA host API. No service worker or browser update state enters UI stores.
-const arenaSession = useArenaSession();
-const isWorkspaceBusy = () => !isReady.value || sessionManager.isSwitching || arenaSession.running ||
+const isWorkspaceBusy = () => !isReady.value || sessionManager.isSwitching ||
   hasSessionConflicts(services.value?.preferenceService) ||
   !!activeWorkspaceRef.value?.isUpdateBusy?.();
 const prepareSessionRestore = async (): Promise<(() => void) | null> => {

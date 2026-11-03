@@ -3,7 +3,6 @@ import type { SubModeKey } from '../stores/session/useSessionManager'
 export const DEFAULT_WORKSPACE_PATH = '/basic/system'
 
 export const WORKSPACE_SUB_MODE_KEYS: ReadonlyArray<SubModeKey> = [
-  'arena',
   'basic-system',
   'basic-user',
   'pro-multi',
@@ -19,7 +18,7 @@ const WORKSPACE_SUB_MODES = {
   image: ['text2image', 'image2image', 'multiimage'],
 } as const
 
-export type WorkspaceMode = keyof typeof WORKSPACE_SUB_MODES | 'arena'
+export type WorkspaceMode = keyof typeof WORKSPACE_SUB_MODES
 
 export interface WorkspaceRouteInfo {
   mode: WorkspaceMode
@@ -30,11 +29,10 @@ export interface WorkspaceRouteInfo {
 
 export const parseWorkspaceRoutePath = (path: string): WorkspaceRouteInfo | null => {
   const cleanPath = path.split('?')[0].split('#')[0]
-  if (cleanPath === '/arena') return { mode: 'arena', subMode: '', subModeKey: 'arena', path: '/arena' }
   const match = cleanPath.match(/^\/(basic|pro|image)\/([^/]+)$/)
   if (!match) return null
 
-  const [, mode, subMode] = match as [string, keyof typeof WORKSPACE_SUB_MODES, string]
+  const [, mode, subMode] = match as [string, WorkspaceMode, string]
   const allowedSubModes = WORKSPACE_SUB_MODES[mode] as readonly string[]
   if (!allowedSubModes.includes(subMode)) return null
 

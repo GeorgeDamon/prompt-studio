@@ -1,4 +1,5 @@
 import { defineComponent, h, watchEffect } from 'vue'
+import { useFocusMode } from '../components/app-layout/focus-context'
 import { useRouter } from 'vue-router'
 import { useGlobalSettings, type GlobalSettingsApi } from '../stores/settings/useGlobalSettings'
 import { DEFAULT_WORKSPACE_PATH } from './workspaceRoutes'
@@ -7,7 +8,6 @@ export const getInitialRouteFromGlobalSettings = (globalSettings: GlobalSettings
   const { functionMode, basicSubMode, proSubMode, imageSubMode } = globalSettings.state
 
   switch (functionMode) {
-    case 'arena': return '/arena'
     case 'basic':
       return `/basic/${basicSubMode}`
     case 'pro':
@@ -35,6 +35,7 @@ export const RootBootstrapRoute = defineComponent({
   name: 'RootBootstrapRoute',
   setup() {
     const router = useRouter()
+    const focusMode = useFocusMode()
     const globalSettings = useGlobalSettings()
     let redirected = false
 
@@ -51,7 +52,7 @@ export const RootBootstrapRoute = defineComponent({
         if (hasExplicitHashRoute) return
       }
 
-      const initialRoute = getInitialRouteFromGlobalSettings(globalSettings)
+      const initialRoute = focusMode?.value ? '/basic/user' : getInitialRouteFromGlobalSettings(globalSettings)
       if (initialRoute === '/' || !initialRoute) return
 
       redirected = true

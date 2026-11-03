@@ -1,4 +1,3 @@
-import type { RuntimeModelSelection } from '../model/runtime-selection';
 import type { UnifiedParameterDefinition } from '../model/parameter-schema'
 import type { ModelConfig, TextModelConfig as ModelTextModelConfig } from '../model/types';
 import type { RegionalEndpoint } from '../shared/types'
@@ -223,8 +222,7 @@ export interface ILLMService {
   sendMessageStream(
     messages: Message[],
     provider: string,
-    callbacks: StreamHandlers,
-    selection?: RuntimeModelSelection
+    callbacks: StreamHandlers
   ): Promise<void>;
 
   /**

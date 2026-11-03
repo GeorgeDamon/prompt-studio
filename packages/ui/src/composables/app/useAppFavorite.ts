@@ -155,7 +155,7 @@ export interface AppFavoriteOptions {
     optimizerCurrentVersions?: Ref<PromptRecordChain['versions']>
     getFavoriteImageStorageService?: () => IImageStorageService | null
     getFavoriteManager?: () => IFavoriteManager | null
-    getCurrentFunctionMode?: () => 'basic' | 'pro' | 'context' | 'image' | 'arena'
+    getCurrentFunctionMode?: () => 'basic' | 'pro' | 'context' | 'image'
     getCurrentOptimizationMode?: () => OptimizationMode
     getCurrentImageSubMode?: () => 'text2image' | 'image2image' | 'multiimage'
 }
@@ -342,11 +342,10 @@ export function useAppFavorite(options: AppFavoriteOptions): AppFavoriteReturn {
      * 处理保存收藏请求
      */
     const getSessionForCurrentMode = (
-        functionMode: 'basic' | 'pro' | 'context' | 'image' | 'arena',
+        functionMode: 'basic' | 'pro' | 'context' | 'image',
         optimizationMode: OptimizationMode,
         imageSubMode?: 'text2image' | 'image2image' | 'multiimage',
     ): TemporaryVariablesSessionApi | null => {
-        if (functionMode === 'arena') return null
         if (functionMode === 'pro' || functionMode === 'context') {
             return optimizationMode === 'system' ? proMultiMessageSession || null : proVariableSession || null
         }
@@ -361,11 +360,10 @@ export function useAppFavorite(options: AppFavoriteOptions): AppFavoriteReturn {
     }
 
     const getAssetBindingSessionForMode = (
-        functionMode: 'basic' | 'pro' | 'context' | 'image' | 'arena',
+        functionMode: 'basic' | 'pro' | 'context' | 'image',
         optimizationMode: OptimizationMode,
         imageSubMode?: 'text2image' | 'image2image' | 'multiimage',
     ): AssetBindingSessionApi | null => {
-        if (functionMode === 'arena') return null
         if (functionMode === 'basic') {
             return optimizationMode === 'system'
                 ? basicSystemSession || null

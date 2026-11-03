@@ -45,6 +45,7 @@
             :loading="loading"
             :allow-custom="false"
             :clearable="false"
+            :scope-text="t('model.selector.sharedScope')"
             size="small"
             :placeholder="t('model.quickSwitch.placeholder')"
             @update:value="handleModelSelect"

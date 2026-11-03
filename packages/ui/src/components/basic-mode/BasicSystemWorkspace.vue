@@ -5,7 +5,7 @@
         data-testid="workspace"
         data-mode="basic-system"
     >
-        <div class="workspace-page-tools">
+        <div v-if="!focusMode" class="workspace-page-tools">
             <Teleport defer to="#compact-workspace-tools" :disabled="!isCompact">
             <WorkspaceUtilityMenu :compact="isCompact"
                 :disabled="unwrappedLogicProps.isOptimizing || unwrappedLogicProps.isIterating || isAnyVariantRunning"
@@ -18,10 +18,10 @@
         <div
             ref="splitRootRef"
             class="basic-system-split compact-workspace-pane"
-            :style="{ gridTemplateColumns: isCompact ? 'minmax(0, 1fr)' : `${mainSplitLeftPct}% 12px 1fr` }"
+            :style="{ gridTemplateColumns: focusMode || isCompact ? 'minmax(0, 1fr)' : `${mainSplitLeftPct}% 12px 1fr` }"
         >
             <!-- 左侧：优化区域 -->
-            <div v-show="!isCompact || mobileRegion === 'optimize'" class="split-pane compact-optimize-region" style="min-width: 0; height: 100%; overflow: hidden;">
+            <div v-show="focusMode || !isCompact || mobileRegion === 'optimize'" class="split-pane compact-optimize-region" style="min-width: 0; height: 100%; overflow: hidden;">
                 <OptimizeWorkspaceLayout ref="optimizeLayoutRef" :compact="isCompact"
                     @scroll="rememberOptimizeScroll">
                 <template #original>
@@ -34,7 +34,7 @@
                 >
                     <!-- 折叠态：只显示标题栏 -->
                     <NFlex class="source-summary-heading"
-                        v-if="isInputPanelCollapsed"
+                        v-if="!focusMode && isInputPanelCollapsed"
                         justify="space-between"
                         align="center"
                     >
@@ -67,32 +67,36 @@
                     </NFlex>
 
                     <!-- 展开态：完整输入面板 -->
-                    <div class="workspace-input-panel" v-show="!isInputPanelCollapsed">
+                    <div class="workspace-input-panel" v-show="focusMode || !isInputPanelCollapsed">
                     <InputPanelUI
                         :compact="isCompact"
                         v-model="promptModel"
                         :selected-model="selectedOptimizeModelKeyModel"
                         test-id-prefix="basic-system"
                         :label="t('promptOptimizer.originalPrompt')"
-                        :placeholder="t('promptOptimizer.placeholder')"
+                        :placeholder="focusMode ? '想让 AI 帮你做什么？写下需求，或粘贴已有的提示词…' : t('promptOptimizer.placeholder')"
                         :model-label="t('promptOptimizer.optimizeModel')"
                         :template-label="t('promptOptimizer.templateLabel')"
                         :button-text="t('promptOptimizer.optimize')"
                         :loading-text="t('common.loading')"
                         :loading="unwrappedLogicProps.isOptimizing"
-                        :disabled="unwrappedLogicProps.isOptimizing"
+                        :disabled="unwrappedLogicProps.isOptimizing || isImporting"
                         :show-preview="false"
-                        :show-analyze-button="!isCompact"
+                        :show-analyze-button="!focusMode && !isCompact"
                         :analyze-loading="analyzing"
                         @submit="handleOptimizeSafely"
                         @analyze="handleAnalyze"
                         @configModel="handleOpenModelManager"
                     >
+                        <template v-if="focusMode" #input-tools>
+                            <FileImportControl @reading="isImporting = $event" v-model="promptModel" :disabled="unwrappedLogicProps.isOptimizing || unwrappedLogicProps.isIterating" />
+                        </template>
                         <!-- 模型选择 -->
 
 
                         <template #model-select>
-                            <TextModelSelector
+                            <FocusModeSelect v-if="focusMode" :disabled="unwrappedLogicProps.isOptimizing || unwrappedLogicProps.isIterating || isImporting" />
+                            <TextModelSelector v-else
                                 v-model="selectedOptimizeModelKeyModel"
                                 data-testid="basic-system-model-select"
                                 :options="modelSelection.textModelOptions"
@@ -124,7 +128,7 @@
                         </template>
 
                         <!-- 标题栏折叠按钮 -->
-                        <template #header-extra>
+                        <template v-if="!focusMode" #header-extra>
                             <NButton
                                 type="tertiary"
                                 size="small"
@@ -147,7 +151,7 @@
                 </template>
                 <template #workspace>
                 <!-- 优化工作区 -->
-                <TestSourceLinkedCard class="compact-result-card"
+                <TestSourceLinkedCard v-if="!focusMode || optimizedPromptModel || unwrappedLogicProps.isOptimizing || unwrappedLogicProps.isIterating" class="compact-result-card"
                     :style="{ flex: 1, minHeight: '200px', overflow: 'hidden' }"
                     content-style="height: 100%; max-height: 100%; overflow: hidden;"
                     :feedback-key="sourceAreaFeedback.workspace.key"
@@ -156,7 +160,7 @@
                 >
                     <PromptPanelUI
                         :mobile-layout="isCompact"
-                        :enable-evaluation="!isCompact"
+                        :enable-evaluation="!focusMode && !isCompact"
                         test-id="basic-system"
                         ref="promptPanelRef"
                         v-model:optimized-prompt="optimizedPromptModel"
@@ -189,7 +193,7 @@
             </div>
 
             <div
-                v-if="!isCompact"
+                v-if="!focusMode && !isCompact"
                 class="split-divider"
                 role="separator"
                 tabindex="0"
@@ -201,7 +205,7 @@
             />
 
             <!-- 右侧：测试区域 -->
-            <div v-show="!isCompact || mobileRegion === 'test'" ref="testPaneRef" class="split-pane compact-test-region" style="min-width: 0; height: 100%; overflow: hidden;">
+            <div v-if="!focusMode" v-show="!isCompact || mobileRegion === 'test'" ref="testPaneRef" class="split-pane compact-test-region" style="min-width: 0; height: 100%; overflow: hidden;">
                 <TestWorkspaceLayout ref="testLayoutRef" :compact="isCompact" v-model:config-expanded="testConfigExpanded" :running="isAnyVariantRunning" :has-results="activeVariantIds.some(id => variantResults[id].requestPrompt !== undefined)"
                     @scroll="rememberTestScroll">
                     <template #input>
@@ -316,7 +320,7 @@
                                         </div>
                                         <div class="variant-cell__model">
                                             <NText v-if="isCompact" depth="2" class="test-settings-label">{{ t('test.model') }}</NText>
-                                            <TextModelSelector
+                                            <TextModelSelector scope="column"
                                                 :data-testid="getVariantModelTestId(id)"
                                                 :model-value="variantModelKeyModels[id].value"
                                                 @update:model-value="(value) => { variantModelKeyModels[id].value = String(value ?? '') }"
@@ -364,6 +368,7 @@
                                         hasPromptSnapshot: variantResults[id].requestPrompt !== undefined }"
                                     :busy="isAnyVariantRunning" @run="runVariant(id)" />
                                 <p v-if="variantFailed[id]" role="alert" class="compact-test-error">{{ t('workspace.testFailed') }}</p>
+                                <p v-if="isCompact && isVariantStale(id)" class="compact-stale">{{ t('workspace.staleResult') }}</p>
                                 <OutputDisplay
                                     :fit-content="isCompact"
                                     :test-id="getVariantOutputTestId(id)"
@@ -440,10 +445,10 @@
 
         <TestSourcePreview v-model:show="sourcePreviewOpen" :title="sourcePreviewTitle"
           :content="sourcePreviewContent" :editable="sourcePreviewEditable" @edit="editPreviewSource" />
-        <WorkspaceRegionSwitch v-if="isCompact" v-model="mobileRegion"
+        <WorkspaceRegionSwitch v-if="!focusMode && isCompact" v-model="mobileRegion"
             :optimizing="unwrappedLogicProps.isOptimizing || unwrappedLogicProps.isIterating"
             :testing="isAnyVariantRunning" />
-        <EvaluationPanel
+        <EvaluationPanel v-if="!focusMode"
             v-model:show="evaluation.isPanelVisible.value"
             :is-evaluating="panelProps.isEvaluating"
             :result="panelProps.result"
@@ -467,7 +472,7 @@
             @clear="handleClearEvaluation"
             @retry="handleReEvaluateActive"
         />
-        <CompareRoleConfigDialog
+        <CompareRoleConfigDialog v-if="!focusMode"
             :model-labels="Object.fromEntries(modelSelection.textModelOptions.value.map(option => [option.value, option.primary]))"
             v-model="compareRoleConfig.showDialog.value"
             :entries="compareRoleConfig.entries.value"
@@ -479,6 +484,12 @@
 </template>
 
 <script setup lang="ts">
+import FileImportControl from '../app-layout/FileImportControl.vue'
+import FocusModeSelect from '../app-layout/FocusModeSelect.vue'
+import { useFocusMode, focusCommandKey } from '../app-layout/focus-context'
+const focusMode = useFocusMode()
+const isImporting = ref(false)
+const focusCommand = inject(focusCommandKey, undefined)
 import CompareRoleSummary from '../evaluation/CompareRoleSummary.vue'
 import TestWorkspaceToolbar from '../TestWorkspaceToolbar.vue'
 import TestVariantConfig from '../TestVariantConfig.vue'
@@ -531,7 +542,6 @@ import { NButton, NCard, NFlex, NIcon, NText } from 'naive-ui'
 import InputPanelUI from '../InputPanel.vue'
 import PromptPanelUI from '../PromptPanel.vue'
 import WorkspaceUtilityMenu from '../common/WorkspaceUtilityMenu.vue'
-import ThemedTooltip from '../common/ThemedTooltip.vue'
 import { resolveSourceAssetRef } from '../../utils/source-asset'
 import { beginOutputStream } from '../../utils/output-document'
 import TestInputSection from '../TestInputSection.vue'
@@ -957,9 +967,6 @@ const getVariantVersionLabel = (id: TestVariantId): string => {
   )
 }
 
-const getVariantResolvedVersion = (id: TestVariantId): number =>
-  resolveTestPrompt(variantVersionModels[id].value).resolvedVersion
-
 const compareReadyVariantIds = computed(() =>
   activeVariantIds.value.filter((id) => hasVariantResult(id) && !isVariantStale(id))
 )
@@ -981,9 +988,6 @@ const compareRoleConfig = useCompareRoleConfig({
   persistedRoleSignatures: toRef(session, 'compareSnapshotRoleSignatures'),
   persistRoles: (roles, signatures) => session.updateCompareSnapshotRoles(roles, signatures),
 })
-const compareRoleEntryMap = computed(() =>
-  Object.fromEntries(compareRoleConfig.entries.value.map((entry) => [entry.id, entry]))
-)
 const compareToolbarStatus = computed(() =>
   activeVariantIds.value.length >= 2
     ? buildCompareToolbarStatus(
@@ -1661,8 +1665,21 @@ watch(() => session.chainId, async (newChainId) => {
   }
 })
 
+watch(() => focusCommand?.value, async (command) => {
+  if (!command || !focusMode?.value || logic.isOptimizing.value || logic.isIterating.value) return
+  if (!command.text) {
+    if (promptPanelRef.value?.confirmDiscardChanges && !(await promptPanelRef.value.confirmDiscardChanges())) return
+    handleClearContent()
+  } else {
+    promptModel.value = command.text
+    isInputPanelCollapsed.value = false
+  }
+  await nextTick()
+  document.querySelector<HTMLTextAreaElement>('.focus-app .input-panel-primary-editor textarea')?.focus()
+})
+
 defineExpose({
-  isUpdateBusy: () => logic.isOptimizing.value || logic.isIterating.value || isAnyVariantRunning.value || evaluation.isAnyEvaluating.value,
+  isUpdateBusy: () => isImporting.value || logic.isOptimizing.value || logic.isIterating.value || isAnyVariantRunning.value || evaluation.isAnyEvaluating.value,
   promptPanelRef,
   openIterateDialog: (initialContent?: string) => {
     promptPanelRef.value?.openIterateDialog?.(initialContent)

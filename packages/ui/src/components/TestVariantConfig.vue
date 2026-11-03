@@ -18,7 +18,7 @@
     </div>
     <div class="test-variant-config__model">
       <slot name="model">
-        <TextModelSelector :model-value="modelKey" :options="options || []"
+        <TextModelSelector :model-value="modelKey" :options="options || []" scope="column"
           :aria-label="label + ' ' + t('test.model')" :data-testid="modelTestId"
           :disabled="disabled" size="small"
           @update:model-value="emit('update:modelKey', $event)"

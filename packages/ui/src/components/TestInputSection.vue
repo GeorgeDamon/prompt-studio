@@ -2,8 +2,8 @@
   <div>
     <NSpace vertical :size="8">
       <!-- 标题和控制区域 -->
-      <NFlex v-if="showHeader" :justify="showLabel ? 'space-between' : 'end'" align="center" :wrap="false">
-        <NText v-if="showLabel" :depth="2" class="test-input-section__label">
+      <NFlex justify="space-between" align="center" :wrap="false">
+        <NText :depth="2" class="test-input-section__label">
           {{ label }}
         </NText>
         <div
@@ -41,14 +41,12 @@
         show-count
         :size="size"
         :data-testid="props.testId"
-        :input-props="{ 'aria-label': label }"
       />
 
       <!-- 帮助文本 -->
       <NText v-if="helpText" :depth="3" style="font-size: 12px;">
         {{ helpText }}
       </NText>
-      <slot name="footer" :open-fullscreen="openFullscreen" />
     </NSpace>
 
     <!-- 全屏弹窗 -->
@@ -80,8 +78,6 @@ const { t } = useI18n()
 interface Props {
   modelValue: string
   label: string
-  showLabel?: boolean
-  showHeader?: boolean
   placeholder?: string
   helpText?: string
   disabled?: boolean
@@ -97,8 +93,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   placeholder: '',
-  showLabel: true,
-  showHeader: true,
   helpText: '',
   disabled: false,
   size: 'medium',

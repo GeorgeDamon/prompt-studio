@@ -17,7 +17,6 @@ import { createImageAdapterRegistry } from './adapters/registry'
 import { BaseError } from '../llm/errors'
 import { IMAGE_ERROR_CODES } from '../../constants/error-codes'
 import { mergeOverrides } from '../model/parameter-utils'
-import { resolveRuntimeImageModel } from '../model/runtime-selection'
 import { ImageError } from './errors'
 import { toErrorWithCode } from '../../utils/error'
 import {
@@ -45,12 +44,6 @@ export class ImageService implements IImageService {
     this.imageModelManager = imageModelManager
     this.registry = registry ?? createImageAdapterRegistry()
     this.imageInputOptions = imageInputOptions
-  }
-
-  private async resolveRequestConfig(request: Pick<ImageRequest, 'configId' | 'modelId' | 'configSnapshot'>): Promise<ImageModelConfig | null> {
-    const base = request.configSnapshot ?? await this.imageModelManager.getConfig(request.configId)
-    if (!base || !request.modelId || request.modelId === base.modelId) return base
-    return resolveRuntimeImageModel(base, { modelId: request.modelId }, this.registry)
   }
 
   async validateRequest(request: ImageRequest): Promise<void> {
@@ -99,7 +92,7 @@ export class ImageService implements IImageService {
 
     await this.validateBaseRequest(request)
 
-    const config = await this.resolveRequestConfig(request)
+    const config = await this.imageModelManager.getConfig(request.configId)
     if (!config) {
       throw new ImageError(IMAGE_ERROR_CODES.CONFIG_NOT_FOUND, undefined, { configId: request.configId })
     }
@@ -139,7 +132,7 @@ export class ImageService implements IImageService {
 
     this.validateSourceInputImage(request.inputImage)
 
-    const config = await this.resolveRequestConfig(request)
+    const config = await this.imageModelManager.getConfig(request.configId)
     if (!config) {
       throw new ImageError(IMAGE_ERROR_CODES.CONFIG_NOT_FOUND, undefined, { configId: request.configId })
     }
@@ -177,7 +170,7 @@ export class ImageService implements IImageService {
     }
   }
 
-  private async validateBaseRequest(request: Pick<ImageRequest, 'prompt' | 'configId' | 'count' | 'modelId'>): Promise<void> {
+  private async validateBaseRequest(request: Pick<ImageRequest, 'prompt' | 'configId' | 'count'>): Promise<void> {
     // 验证基本字段
     if (!request?.prompt || !request.prompt.trim()) {
       throw new ImageError(IMAGE_ERROR_CODES.PROMPT_EMPTY)
@@ -188,7 +181,7 @@ export class ImageService implements IImageService {
     }
 
     // 验证配置是否存在且启用
-    const config = await this.resolveRequestConfig(request)
+    const config = await this.imageModelManager.getConfig(request.configId)
     if (!config) {
       throw new ImageError(IMAGE_ERROR_CODES.CONFIG_NOT_FOUND, undefined, { configId: request.configId })
     }
@@ -266,7 +259,7 @@ export class ImageService implements IImageService {
 
   private async generateInternal(request: ImageRequest): Promise<ImageResult> {
     // 获取配置
-    const config = await this.resolveRequestConfig(request)
+    const config = await this.imageModelManager.getConfig(request.configId)
     if (!config) {
       throw new ImageError(IMAGE_ERROR_CODES.CONFIG_NOT_FOUND, undefined, { configId: request.configId })
     }

@@ -1,7 +1,6 @@
 import type { OptionalIntegration } from './types'
 
 import { getEnvVar } from '@prompt-optimizer/core'
-import { useArenaSession } from '../stores/session/useArenaSession'
 
 export const integration: OptionalIntegration = {
   id: 'prompt-garden',
@@ -18,7 +17,6 @@ export const integration: OptionalIntegration = {
       hasRestoredInitialState: ctx.hasRestoredInitialState,
       isLoadingExternalData: ctx.isLoadingExternalData,
       gardenBaseUrl,
-      arenaSession: useArenaSession(),
       basicSystemSession: ctx.basicSystemSession,
       basicUserSession: ctx.basicUserSession,
       proMultiMessageSession: ctx.proMultiMessageSession,

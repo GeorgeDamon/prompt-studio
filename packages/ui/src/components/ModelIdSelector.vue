@@ -1,7 +1,7 @@
 <template>
   <ModelSelector v-bind="$attrs" :model-value="value || ''" :groups="groups" :selected-label="selectedLabel"
     :placeholder="placeholder" :disabled="disabled" :loading="loading" :size="size"
-    :allow-custom="allowCustom" :clearable="clearable"
+    :allow-custom="allowCustom" :clearable="clearable" :scope-text="scopeText || t('model.selector.draftScope')"
     @update:model-value="emit('update:value', $event)" @update:show="emit('update:show', $event)" />
 </template>
 
@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   clearable?: boolean
   allowCustom?: boolean
+  scopeText?: string
   size?: 'small' | 'medium' | 'large'
 }>(), { clearable: true, allowCustom: true })
 const emit = defineEmits<{ 'update:value': [value: string]; 'update:show': [value: boolean] }>()

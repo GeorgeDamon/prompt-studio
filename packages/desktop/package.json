@@ -1,7 +1,7 @@
 {
   "name": "@prompt-optimizer/desktop",
-  "version": "2.15.0",
-  "description": "Desktop application for Prompt Optimizer",
+  "version": "0.2.1",
+  "description": "Prompt Studio desktop application",
   "main": "main.js",
   "repository": {
     "type": "git",
@@ -33,11 +33,11 @@
     "webdav": "^5.10.0"
   },
   "build": {
-    "appId": "com.promptoptimizer.desktop",
-    "productName": "PromptOptimizer",
-    "executableName": "PromptOptimizer",
+    "appId": "com.promptstudio.desktop",
+    "productName": "Prompt Studio",
+    "executableName": "PromptStudio",
     "directories": {
-      "output": "dist"
+      "output": "../../release/desktop"
     },
     "files": [
       "main.js",
@@ -47,21 +47,19 @@
       "config/**/*",
       "icons/**/*",
       "web-dist/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "LICENSE",
+      "THIRD_PARTY_NOTICES.md"
     ],
-    "publish": {
-      "provider": "github",
-      "owner": "linshenkx",
-      "repo": "prompt-optimizer",
-      "private": false
-    },
+    "publish": null,
     "win": {
       "target": [
         "nsis",
         "zip"
       ],
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
-      "icon": "icons/app-icon.ico"
+      "artifactName": "PromptStudio-${version}-${os}-${arch}.${ext}",
+      "icon": "icons/app-icon.ico",
+      "signAndEditExecutable": false
     },
     "mac": {
       "target": [
@@ -80,21 +78,24 @@
           ]
         }
       ],
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
-      "icon": "icons/app-icon.icns"
+      "artifactName": "PromptStudio-${version}-${os}-${arch}.${ext}",
+      "icon": "icons/app-icon.icns",
+      "category": "public.app-category.productivity"
     },
     "linux": {
       "target": [
         "AppImage",
         "zip"
       ],
-      "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+      "artifactName": "PromptStudio-${version}-${os}-${arch}.${ext}",
       "icon": "icons/"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
-    }
+    },
+    "npmRebuild": false,
+    "afterPack": "./after-pack.cjs"
   },
   "keywords": [
     "electron",

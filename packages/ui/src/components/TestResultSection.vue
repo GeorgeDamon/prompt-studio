@@ -148,9 +148,9 @@
     >
       <template #header>
         <div class="card-header-content">
-          <slot name="single-header">
-            <NText style="font-size: 16px; font-weight: 600;">{{ singleResultTitle }}</NText>
-          </slot>
+          <NText style="font-size: 16px; font-weight: 600;">
+            {{ singleResultTitle }}
+          </NText>
           <div v-if="showEvaluation && hasSecondaryResult" class="evaluation-entry">
             <EvaluationScoreBadge
               v-if="hasSecondaryEvaluation || isEvaluatingSecondary"

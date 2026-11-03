@@ -89,7 +89,7 @@ interface Props {
   mode?: 'create' | 'save' | 'edit'
   content?: string
   originalContent?: string
-  currentFunctionMode?: 'basic' | 'context' | 'pro' | 'image' | 'arena'
+  currentFunctionMode?: 'basic' | 'context' | 'pro' | 'image'
   currentOptimizationMode?: 'system' | 'user'
   prefill?: {
     title?: string

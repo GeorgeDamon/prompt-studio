@@ -1,6 +1,4 @@
 /** Presentation data only: callers retain selection identity and persistence. */
-export type ModelSelectorKind = 'text' | 'image'
-
 export interface ModelSelectorChoice {
   value: string
   label: string
@@ -11,7 +9,6 @@ export interface ModelSelectorChoice {
 export interface ModelSelectorGroup {
   value: string
   label: string
-  kind?: ModelSelectorKind
   searchText?: string
   choices: ModelSelectorChoice[]
   configurable?: boolean
